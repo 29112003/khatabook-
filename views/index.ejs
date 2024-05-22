@@ -1,12 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body>
-    <h2>hello kaise ho app log</h2>
-</body>
-</html>
+
+<%- include("./partials/header") %>
+<div class="logincontainer mt-40 w-full h-[80%] flex gap-11 items- justify-center">
+    <div class="loginpanel">
+        
+        <h3 class="text-2xl mb-3">Login</h3>
+        <form action="/login" class="flex flex-col gap-5 items-start" method="post">
+            <input class="block px-3 py-2 border-[1px] outline-blue-700 text-xl border-zinc-100 rounded-md" type="text" placeholder="Email or username">
+            <input class="block px-3 py-2 border-[1px] outline-blue-700 border-zinc-100 text-xl rounded-md" type="password" placeholder="password">
+            <input type="submit" class="block px-3 py-2 text-xl  bg-blue-600 text-white rounded-md text-wrap">
+        </form>
+        <a class="text-blue-700 text-xl block mt-3 text-bold" href="/register">Don't have an account ?</a>
+
+</div>
+</div>
+
+<%- include("./partials/footer") %>
