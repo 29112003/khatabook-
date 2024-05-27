@@ -4,6 +4,7 @@ const path = require('path');
 const db = require('./config/mongoose-connection');
 
 const indexRouter = require('./routes/indexRoute');
+const hisaabRouter = require('./routes/hisaabRoute');
 const cookieParser = require('cookie-parser');
 
 app.set("view engine","ejs");
@@ -14,5 +15,6 @@ app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
 
 app.use('/',indexRouter);
+app.use('/hisaab',hisaabRouter);
 
 app.listen(process.env.PORT||3000);
