@@ -44,7 +44,7 @@ router.post('/register',async (req,res)=>{
                             
                             var token = jwt.sign({ email , id : user._id }, process.env.SECRET);
                             res.cookie("token",token);
-                            res.send(user);
+                            res.render("profile",{user});
                         });
                     });
 
@@ -66,7 +66,7 @@ router.get('/login',(req,res)=>{
 router.get('/logout',isLoggedIn,(req,res)=>{
     try{
         res.clearCookie("token");
-        res.send("cookie was deleted");
+        res.redirect("login");
     }catch(err){
         debug(err)
     }
@@ -79,40 +79,48 @@ router.get('/logout',isLoggedIn,(req,res)=>{
 // generate cookie and send it
 // hello from profile
 
-router.post('/login', async (req,res)=>{
-    try{
-        const {password, email} = req.body;
-        const user = await userModel.findOne({email});
-        if(!user){
-            return res.send("your email and password is invalid");
-        }else{
-            // checking for the password
-            
-            bcrypt.compare(password, user.password, function(err, result) {
-                if(err){
-                    debug(err);
-                }else{
-                    if(result){
-                        jwt.sign({email,id : user._id }, process.env.SECRET, function(err, token) {
-                            if(err){
-                                debug(err);
-                            }
-                            res.cookie("token",token);
-                            res.send("profile");
-                            });
-                    }else{
-                        res.send("your email and password is invalid");
-                    }
-                }
-            });
+router.post('/login', async (req, res) => {
+    try {
+        const { password, email } = req.body;
+        
+        // Check if email and password are provided
+        if (!email || !password) {
+            return res.status(400).send("Email and password are required");
         }
-    }catch(err){
+
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.status(401).send("Invalid email or password");
+        }
+
+        bcrypt.compare(password, user.password, function (err, result) {
+            if (err) {
+                debug(err);
+                return res.status(500).send("Error comparing passwords");
+            }
+
+            if (result) {
+                jwt.sign({ email, id: user._id }, process.env.SECRET, function (err, token) {
+                    if (err) {
+                        debug(err);
+                        return res.status(500).send("Error signing the token");
+                    }
+                    res.cookie("token", token);
+                    res.status(200).render("profile",{user,loggedin:true});
+                });
+            } else {
+                res.status(401).send("Invalid email or password");
+            }
+        });
+    } catch (err) {
         debug(err);
+        res.status(500).send("Internal server error");
     }
-})
+});
 
-
-
+// router.get('/profile',(req,res)=>{
+//     res.render(profile);
+// })
 function isLoggedIn(req,res,next){
     try{
         if(req.cookies.token){
@@ -131,7 +139,7 @@ function isLoggedIn(req,res,next){
     }
 }
 router.get('/profile',isLoggedIn,(req,res)=>{
-    res.send("hello");
+    res.send("hello",{user : res.user,loggedin : true});
 })
 
 module.exports = router;

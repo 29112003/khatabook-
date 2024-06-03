@@ -11,10 +11,14 @@
     <div class="w-full h-[100px] ">
         <div class="navbar flex justify-between w-full px-20 py-10">
             <h3 class="font-bold text-3xl" >khaatabook</h3>
-            <div class="links flex gap-10">
-                <a class="font-semibold text-xl text-blue-500" href="#">Home</a>
-                <a class="font-semibold text-xl text-blue-500" href="#">Create new hisaab</a>
-            </div>
+            <% var answer = typeof loggedin !== 'undefined'?loggedin : false %> 
+            <% if(answer){ %>
+                <div class="links flex gap-10">
+                    <a class="font-semibold text-xl text-blue-500" href="#">Home</a>
+                    <a class="font-semibold text-xl text-blue-500" href="#">Create new hisaab</a>
+                    <a class="font-semibold text-xl text-red-700" href="/logout">logout</a>
+                </div>
+            <% } %>
 
         </div>
     </div>

@@ -10,11 +10,6 @@ const userSchema = mongoose.Schema({
         minLength:3,
         maxLength:20,
     },
-    name:{
-        type:String,
-        required:true,
-        trim:true
-    },
     profilepicture:{
         type:String,
         trim:true
@@ -27,7 +22,7 @@ const userSchema = mongoose.Schema({
     password:{
         type:String,
         required:true,
-        select:false
+        // select:false
     },
     hisaab :{
         type:mongoose.Schema.Types.ObjectId,
