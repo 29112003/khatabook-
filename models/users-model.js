@@ -22,12 +22,12 @@ const userSchema = mongoose.Schema({
     password:{
         type:String,
         required:true,
-        // select:false
+        select:false
     },
-    hisaab :{
+    hisaab :[{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Hisaab"
-    }
+    }]
 })
 
 module.exports = mongoose.model("user",userSchema)

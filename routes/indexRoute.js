@@ -1,58 +1,60 @@
 const express = require('express');
 const router = express.Router();
 
+const isLoggedIn = require('../middlewares/login-middleware');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const userModel = require('../models/users-model');
-
-
 const debug = require('debug')("development:indexRoute");
 
 router.get('/register',(req,res)=>{
     res.render("register");
 })
 
-// check whether the user exist or not if that email vala person already exist so give them already exist
-// generate hash password
-// create in mongo
-// create token form jwt and save it and remember save two fields email and id
-// send for checking
-
 
 
 // SECRET
 router.post('/register',async (req,res)=>{
-    console.log("starting register route")
     try{
-        if(process.env.SECRET){
+        if(!process.env.SECRET){
+            debug("create the secret key first");
+            return res.status(500).send("internal server error");
+        }
             const {email , username , password} = req.body;
+
+            debug(email, username, password);
 
             const user = await userModel.findOne({email})
 
-            if(user){
-                //user is already exist with email
-                return res.send("user already exist");
-            }else{
-                
-                    bcrypt.genSalt(11, function(err, salt) {
-                        bcrypt.hash(password, salt,async function(err, hash) {
-                            const user =  await userModel.create({
-                                email,
-                                username,
-                                password:hash
-                            })
-                            
-                            var token = jwt.sign({ email , id : user._id }, process.env.SECRET);
-                            res.cookie("token",token);
-                            res.render("profile",{user});
-                        });
-                    });
+            debug(user)
 
-                
+            if(user){
+                debug("user already exists")
+                return res.status(409).send("user already exist");
             }
-        }
-    }catch(err){
+            debug(user)
+                    
+            const salt =await bcrypt.genSalt(11);
+            debug(salt);
+            const hash = await bcrypt.hash(password, salt);
+            debug(hash);
+                    
+            const createdUser =  await userModel.create({
+                email,
+                username,
+                password:hash
+                })
+                debug(createdUser);            
+                
+                var token = jwt.sign({ email , id : createdUser._id }, process.env.SECRET);
+                debug(token)
+                res.cookie("token",token);
+                // res.render("profile",{user});
+                res.status(202).send(createdUser);
+                    
+        }catch(err){
             debug(err);
+            return res.status(500).send("Internal Server Error");
         }
 })
 
@@ -63,6 +65,7 @@ router.get('/login',(req,res)=>{
         debug(err)
     }
 })
+
 router.get('/logout',isLoggedIn,(req,res)=>{
     try{
         res.clearCookie("token");
@@ -87,31 +90,26 @@ router.post('/login', async (req, res) => {
         if (!email || !password) {
             return res.status(400).send("Email and password are required");
         }
+        debug(email , password)
+        const user = await userModel.findOne({ email }).select('+password');
 
-        const user = await userModel.findOne({ email });
+        debug(user)
         if (!user) {
             return res.status(401).send("Invalid email or password");
         }
 
-        bcrypt.compare(password, user.password, function (err, result) {
-            if (err) {
-                debug(err);
-                return res.status(500).send("Error comparing passwords");
-            }
+        debug("result")
+        const result = await bcrypt.compare(password,user.password);
 
-            if (result) {
-                jwt.sign({ email, id: user._id }, process.env.SECRET, function (err, token) {
-                    if (err) {
-                        debug(err);
-                        return res.status(500).send("Error signing the token");
-                    }
-                    res.cookie("token", token);
-                    res.status(200).render("profile",{user,loggedin:true});
-                });
-            } else {
-                res.status(401).send("Invalid email or password");
-            }
-        });
+        if(!result){
+            debug("password mismatch")
+            return res.status(401).send("email and password are not correct");
+        }
+
+        const token = jwt.sign({email,id : user._id}, process.env.SECRET);
+
+        res.cookie("token",token);
+        res.send(user)
     } catch (err) {
         debug(err);
         res.status(500).send("Internal server error");
@@ -121,23 +119,7 @@ router.post('/login', async (req, res) => {
 // router.get('/profile',(req,res)=>{
 //     res.render(profile);
 // })
-function isLoggedIn(req,res,next){
-    try{
-        if(req.cookies.token){
-            if(process.env.SECRET){
-                jwt.verify(req.cookies.token, process.env.SECRET, function(err, decoded) {
-                    req.user = decoded;
-                    next();
-                });
-            }
-        }
-        else{
-            res.redirect("login");
-        }
-    }catch(err){
-        debug(err);
-    }
-}
+
 router.get('/profile',isLoggedIn,(req,res)=>{
     res.send("hello",{user : res.user,loggedin : true});
 })
