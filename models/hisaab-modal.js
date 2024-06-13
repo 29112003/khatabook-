@@ -36,4 +36,4 @@ const hisaabSchema = mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("hisaab", hisaabSchema);
+module.exports = mongoose.model("Hisaab", hisaabSchema);

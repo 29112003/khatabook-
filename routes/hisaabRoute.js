@@ -4,6 +4,7 @@ const isLoggedIn = require('../middlewares/login-middleware');
 const hisaabModel = require("../models/hisaab-modal");
 const userModel = require("../models/users-model")
 const debug = require('debug')('development:hisaabRoute')
+
 router.get('/',(req,res)=>{
     res.send("welcome to hisaab");
 })

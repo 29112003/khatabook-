@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const userModel = require('../models/users-model');
 const debug = require('debug')("development:indexRoute");
+const redirectIfLogin = require('../middlewares/redirectIfLogin')
 
 router.get('/register',(req,res)=>{
     res.render("register");
@@ -22,22 +23,16 @@ router.post('/register',async (req,res)=>{
         }
             const {email , username , password} = req.body;
 
-            debug(email, username, password);
-
             const user = await userModel.findOne({email})
-
-            debug(user)
 
             if(user){
                 debug("user already exists")
-                return res.status(409).send("user already exist");
+                req.flash("error","user already exists")
+                return res.redirect("/register");
             }
-            debug(user)
                     
             const salt =await bcrypt.genSalt(11);
-            debug(salt);
             const hash = await bcrypt.hash(password, salt);
-            debug(hash);
                     
             const createdUser =  await userModel.create({
                 email,
@@ -49,8 +44,7 @@ router.post('/register',async (req,res)=>{
                 var token = jwt.sign({ email , id : createdUser._id }, process.env.SECRET);
                 debug(token)
                 res.cookie("token",token);
-                // res.render("profile",{user});
-                res.status(202).send(createdUser);
+                return res.redirect("/profile");
                     
         }catch(err){
             debug(err);
@@ -75,12 +69,6 @@ router.get('/logout',isLoggedIn,(req,res)=>{
     }
 })
 
-// for login one 
-// checking the key
-// validation of email in out mongo
-// check the password
-// generate cookie and send it
-// hello from profile
 
 router.post('/login', async (req, res) => {
     try {
@@ -90,38 +78,51 @@ router.post('/login', async (req, res) => {
         if (!email || !password) {
             return res.status(400).send("Email and password are required");
         }
-        debug(email , password)
         const user = await userModel.findOne({ email }).select('+password');
 
-        debug(user)
         if (!user) {
-            return res.status(401).send("Invalid email or password");
+            req.flash("error", "Invalid credentials");
+            return res.redirect("/");
         }
 
-        debug("result")
         const result = await bcrypt.compare(password,user.password);
 
         if(!result){
-            debug("password mismatch")
-            return res.status(401).send("email and password are not correct");
+            req.flash("error", "Invalid credentials");
+            return res.redirect("/");
         }
 
         const token = jwt.sign({email,id : user._id}, process.env.SECRET);
 
         res.cookie("token",token);
-        res.send(user)
+        res.redirect("/profile");
     } catch (err) {
         debug(err);
-        res.status(500).send("Internal server error");
+        return res.status(500).send("Internal server error");
     }
 });
 
-// router.get('/profile',(req,res)=>{
-//     res.render(profile);
-// })
+router.get("/profile", isLoggedIn, async (req, res) => {
+    debug(req.user.id)
+    let byDate = Number(req.query.byDate);
+    let { startDate, endDate } = req.query;
+    byDate = byDate ? byDate : 1;
+    startDate = startDate ? startDate : new Date("1970/01/01");
+    endDate = endDate ? endDate : new Date();
+  
+    const user = await userModel.findOne({ _id: req.user.id }).populate({
+      path: "hisaab",
+      options: {
+        sort: { createdAt: byDate },
+        match: { $gte: startDate, $lte: endDate },
+      },
+    });
+    res.render("profile", { user });
+  });
 
-router.get('/profile',isLoggedIn,(req,res)=>{
-    res.send("hello",{user : res.user,loggedin : true});
+
+router.get('/error',(req,res)=>{
+    res.render("error");
 })
 
 module.exports = router;
