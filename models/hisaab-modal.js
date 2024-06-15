@@ -26,7 +26,7 @@ const hisaabSchema = mongoose.Schema(
     },
     passcode: {
       type: Number,
-      default: "",
+      default:null,
     },
     editPermission: {
       type: Boolean,
