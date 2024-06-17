@@ -62,6 +62,14 @@ router.get('/login',(req,res)=>{
 
 router.get('/logout',isLoggedIn,(req,res)=>{
     try{
+        if(req.session){
+            req.session.destroy(err => {
+                if (err) {
+                    return res.send("Failed to destroy session");
+                }
+                debug("Session destroyed successfully");
+            });
+        }
         res.clearCookie("token");
         res.redirect("login");
     }catch(err){
@@ -103,21 +111,21 @@ router.post('/login', async (req, res) => {
 });
 
 router.get("/profile", isLoggedIn, async (req, res) => {
-    debug(req.user.id)
     let byDate = Number(req.query.byDate);
-    let { startDate, endDate } = req.query;
-    byDate = byDate ? byDate : 1;
-    startDate = startDate ? startDate : new Date("1970/01/01");
+    let {startDate, endDate} = req.query
+
+    byDate = byDate ? byDate : -1;
+    startDate = startDate ? startDate : new Date("1900-01-01")
     endDate = endDate ? endDate : new Date();
-  
-    const user = await userModel.findOne({ _id: req.user.id }).populate({
-      path: "hisaab",
-      options: {
-        sort: { createdAt: byDate },
-        match: { $gte: startDate, $lte: endDate },
-      },
-    });
-    res.render("profile", { user });
+
+    const user = await userModel.findOne({email : req.user.email}).populate({
+        path:"hisaab",
+        match:{createdAt : {$gte : startDate , $lte : endDate}} ,
+        options:{
+            sort : { createdAt : byDate }
+        }
+    })
+    res.render("profile", { user});
   });
 
 

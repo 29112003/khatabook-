@@ -27,6 +27,8 @@ const userSchema = mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"Hisaab"
     }]
+},{
+    timestamps:true
 })
 
 module.exports = mongoose.model("user",userSchema)
