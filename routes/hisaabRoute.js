@@ -49,13 +49,15 @@ router.post("/create", isLoggedIn, async (req, res) => {
   });
 
   router.get("/view/:id", isLoggedIn, async (req, res) => {
-    try {
-      const Hisaab = await hisaabModel.findOne({ _id: req.params.id });
-      if(Hisaab.encrypted){
-        debug(Hisaab)
-        res.render("hisaabVerify",{Hisaab});
-      }else{
-        res.send("not excryted your can see the whole hisaab")
+    
+      // const hisaab = await hisaabModel.findOne({ _id: req.params.id });
+      // res.render("view",{hisaab});
+      try {
+        const hisaab = await hisaabModel.findOne({ _id: req.params.id });
+          if(hisaab.encrypted){
+              return res.render("hisaabVerify",{hisaab});
+            }else{
+            return res.render("view",{hisaab});
       }
     } catch (error) {
       debug(error);
@@ -84,9 +86,10 @@ router.post("/create", isLoggedIn, async (req, res) => {
   router.get("/:id/show", isLoggedIn, async (req, res) => {
     try {
       debug(req.params.id)
+      hisaab = await hisaabModel.findOne({_id : req.params.id})
       debug(req.session.hisaabvirefy)
         if(req.session.hisaabvirefy === req.params.id){
-        return res.send("show")
+        return res.render("view",{hisaab})
       }else{
         return res.send("you passcode is incorrect")
       }
