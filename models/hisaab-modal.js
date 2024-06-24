@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
+const Joi = require("joi");
 
+// Mongoose schema
 const hisaabSchema = mongoose.Schema(
   {
     title: {
@@ -26,7 +28,7 @@ const hisaabSchema = mongoose.Schema(
     },
     passcode: {
       type: Number,
-      default:null,
+      default: null,
     },
     editPermission: {
       type: Boolean,
@@ -36,4 +38,24 @@ const hisaabSchema = mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Hisaab", hisaabSchema);
+const Hisaab = mongoose.model("Hisaab", hisaabSchema);
+
+// Joi validation schema
+const validateHisaab = (data) => {
+  const schema = Joi.object({
+    title: Joi.string().trim().required(),
+    description: Joi.string().trim().required(),
+    user: Joi.string().pattern(/^[0-9a-fA-F]{24}$/), // ObjectId validation
+    encrypted: Joi.boolean(),
+    shareable: Joi.boolean(),
+    passcode: Joi.number().allow(null),
+    editPermission: Joi.boolean(),
+  });
+
+  return schema.validate(data);
+};
+
+module.exports = {
+  HisaabModel,
+  hisaabModelValidator,
+};

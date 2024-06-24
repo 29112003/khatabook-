@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const isLoggedIn = require('../middlewares/login-middleware');
-const hisaabModel = require("../models/hisaab-modal");
+const {hisaabModel , hisaabModelValidator} = require("../models/hisaab-modal");
 const userModel = require("../models/users-model")
 const debug = require('debug')('development:hisaabRoute')
 
@@ -23,6 +23,20 @@ router.post("/create", isLoggedIn, async (req, res) => {
     try {
       const {title,description,shareable,encrypted,passcode,editPermission,} = req.body;
 
+      const { error } = hisaabModelValidator({
+        title,
+        description,
+        shareable,
+        encrypted,
+        passcode,
+        editPermission,
+      })
+      if(error !== undefined){
+        debug(error.message);
+        req.flash("error", error.message);
+        return res.redirect("/hisaab/create");
+      }
+  
       debug(req.user.id)
       const hisaab = await hisaabModel.create({
         title,
@@ -33,7 +47,6 @@ router.post("/create", isLoggedIn, async (req, res) => {
         passcode,
         editPermission,
       });
-  
       const user = await userModel.findOne({ _id: req.user.id });
       user.hisaab.push(hisaab._id);
       await user.save();
